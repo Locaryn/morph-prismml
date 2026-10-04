@@ -1,0 +1,181 @@
+{
+  "$schema": "https://locaryn.dev/schema/morph.json/v0.1",
+  "apiVersion": "0.1",
+  "name": "morph-bonsai",
+  "version": "0.1.0-beta.1",
+  "description": "Runtime Bonsai : les modèles 1-bit et ternaires de PrismML (jusqu'à 27 milliards de paramètres en 3,8 Go) et leur catalogue. Télécharge au premier usage le llama.cpp de PrismML, avec empreinte vérifiée, et choisit CUDA, Vulkan ou Metal selon la machine.",
+  "author": "Locaryn Team",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/Locaryn/morph-bonsai",
+  "repository": "https://github.com/Locaryn/morph-bonsai",
+  "keywords": [
+    "bonsai",
+    "prismml",
+    "llama.cpp",
+    "1-bit",
+    "ternary",
+    "inference-engine"
+  ],
+  "permissions": {
+    "network": {
+      "reason": "Télécharger le runtime (github.com/PrismML-Eng/llama.cpp, empreinte SHA-256 vérifiée) au premier démarrage, et les modèles depuis Hugging Face.",
+      "requireApproval": true
+    },
+    "shell": {
+      "reason": "Lancer llama-server, le serveur d'inférence téléchargé, en local (127.0.0.1 uniquement).",
+      "requireApproval": true
+    },
+    "files.read": {
+      "reason": "Lire les modèles choisis."
+    },
+    "files.write": {
+      "reason": "Installer le runtime dans le dossier privé de l'extension."
+    }
+  },
+  "components": {
+    "skills": [
+      "SKILL.md"
+    ]
+  },
+  "capabilities": [
+    "inference-engine",
+    "bonsai"
+  ],
+  "engine": {
+    "id": "bonsai",
+    "label": "Bonsai (PrismML llama.cpp)",
+    "driver": "openai_compat",
+    "api_url": "http://127.0.0.1:8189",
+    "port": 8189,
+    "install": {
+      "kind": "binary"
+    },
+    "lifecycle": {
+      "start": [
+        "{{plugin_bin_dir}}/locaryn-bonsai-launch",
+        "serve",
+        "--port",
+        "{{port}}",
+        "--model",
+        "{{model_path}}"
+      ],
+      "health": {
+        "method": "GET",
+        "url": "{{endpoint}}/health",
+        "retries": 300,
+        "interval_ms": 2000
+      },
+      "requires_model": true
+    },
+    "model_formats": {
+      "files": [
+        "gguf"
+      ]
+    },
+    "startup_timeout_secs": 1800,
+    "requires": {
+      "os": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "note": "Le premier démarrage télécharge le runtime (environ 700 Mo avec CUDA, 30 Mo avec Vulkan). Une carte NVIDIA avec un pilote 551 ou plus sert le build CUDA ; sinon Vulkan (AMD, Intel), qui retombe sur le processeur. Un 27B ternaire exige 8 Go de mémoire vidéo ou plus pour tout garder sur la carte ; le 27B en 1 bit (3,8 Go) tient dans 6 Go."
+    }
+  },
+  "ui_contributions": {
+    "slots": [
+      {
+        "id": "bonsai-catalog",
+        "slot": "marketplace.catalogs",
+        "order": 30,
+        "type": "data",
+        "label": "Modèles Bonsai",
+        "icon": "cpu",
+        "entry": "dist/marketplace.json",
+        "hint": "Ajoute le filtre « Bonsai » et ses modèles 1-bit et ternaires au catalogue"
+      },
+      {
+        "id": "bonsai-runtime-card",
+        "slot": "engines.runtimes",
+        "order": 30,
+        "type": "action",
+        "label": "Bonsai (PrismML llama.cpp)",
+        "icon": "cpu",
+        "category": "Modèles 1-bit et ternaires",
+        "value": "llama-server (fork prism, CUDA / Vulkan / Metal)",
+        "hint": "Lit les formats Q1_0, Q2_0, PQ2_0 et PTQ1_0 des modèles Bonsai, que le llama.cpp ordinaire ne lit pas tous."
+      }
+    ],
+    "settings_sections": [
+      {
+        "id": "bonsai",
+        "label": "Moteur Bonsai",
+        "fields": [
+          {
+            "id": "context_size",
+            "type": "number",
+            "label": "Taille du contexte",
+            "default": "8192",
+            "hint": "En jetons. Sur une carte de 6 Go, le 27B en 1 bit tient jusqu'à 8 192 ; montez si votre carte a de la marge."
+          },
+          {
+            "id": "thinking",
+            "type": "select",
+            "label": "Raisonnement",
+            "options": [
+              "off",
+              "on",
+              "auto"
+            ],
+            "default": "off",
+            "hint": "Bonsai raisonne longuement avant de répondre quand on le laisse faire : sur une carte modeste, une réponse prend plusieurs fois plus de temps. « off » répond directement."
+          },
+          {
+            "id": "vision",
+            "type": "boolean",
+            "label": "Images",
+            "default": "false",
+            "hint": "Charge le projecteur d'images s'il est à côté du modèle. Coûte environ 0,6 Go de mémoire vidéo."
+          },
+          {
+            "id": "backend",
+            "type": "select",
+            "label": "Backend",
+            "options": [
+              "auto",
+              "cuda",
+              "vulkan",
+              "cpu"
+            ],
+            "default": "auto",
+            "hint": "auto choisit CUDA avec une carte NVIDIA récente, Vulkan sinon."
+          },
+          {
+            "id": "parallel",
+            "type": "number",
+            "label": "Requêtes en parallèle",
+            "default": "1",
+            "hint": "Chaque emplacement a son propre cache : 1 est ce qui tient dans une petite carte."
+          }
+        ]
+      }
+    ]
+  },
+  "platforms": [
+    "windows",
+    "linux",
+    "macos"
+  ],
+  "beta": true,
+  "stability": "untested",
+  "versions": [
+    {
+      "version": "0.1.0-beta.1",
+      "is_beta": true,
+      "summary": "Première version bêta : runtime Bonsai (llama.cpp PrismML) téléchargé et vérifié au premier usage, catalogue de 5 familles de modèles",
+      "tag": "v0.1.0-beta.1",
+      "released_at": "2026-10-04",
+      "install_source": "Locaryn/morph-bonsai#v0.1.0-beta.1"
+    }
+  ]
+}

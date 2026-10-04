@@ -1,0 +1,135 @@
+name: Release Extension
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Vérifier la compilation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.88
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --all-targets --locked
+      - name: Vérifier le manifeste et le catalogue
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "JSON.parse(require('fs').readFileSync('morph.json','utf8'))"
+          node scripts/check-catalogue.mjs
+
+  bundle:
+    name: Bundle ${{ matrix.label }}
+    needs: check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            label: linux-x86_64
+            binary: locaryn-bonsai-launch
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            label: windows-x86_64
+            binary: locaryn-bonsai-launch.exe
+          - os: macos-14
+            target: x86_64-apple-darwin
+            label: macos-x86_64
+            binary: locaryn-bonsai-launch
+          - os: macos-14
+            target: aarch64-apple-darwin
+            label: macos-aarch64
+            binary: locaryn-bonsai-launch
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.88
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Compiler le lanceur
+        run: cargo build --release --locked --target ${{ matrix.target }} --bin locaryn-bonsai-launch
+      - name: Assembler le paquet
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf bundle
+          mkdir -p bundle/bin
+          cp morph.json SKILL.md README.md LICENSE bundle/
+          cp -r dist bundle/
+          test -f bundle/dist/marketplace.json
+          cp "target/${{ matrix.target }}/release/${{ matrix.binary }}" bundle/bin/
+          test -f bundle/bin/${{ matrix.binary }}
+          test -f bundle/morph.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bundle-${{ matrix.label }}
+          path: bundle
+          if-no-files-found: error
+
+  release:
+    name: Publier la release
+    needs: bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          path: dl
+          pattern: bundle-*
+      - name: Archiver chaque plateforme
+        run: |
+          set -euo pipefail
+          VERSION="$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' morph.json | head -n 1)"
+          test -n "$VERSION"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          mkdir -p out
+          for dir in dl/bundle-*; do
+            label="${dir#dl/bundle-}"
+            chmod +x "$dir"/bin/* || true
+            ( cd "$dir" && zip -r -q "$GITHUB_WORKSPACE/out/morph-bonsai-v${VERSION}-${label}.zip" . )
+          done
+          ls -l out
+      - name: Vérifier les archives
+        run: |
+          set -euo pipefail
+          test "$(ls out/*.zip | wc -l)" -eq 4
+          for archive in out/*.zip; do
+            unzip -l "$archive" | grep -q "morph.json"
+            unzip -l "$archive" | grep -q "dist/marketplace.json"
+            unzip -l "$archive" | grep -q "bin/locaryn-bonsai-launch"
+          done
+      - name: Empreintes SHA-256
+        run: |
+          set -euo pipefail
+          ( cd out && sha256sum *.zip | tee SHA256SUMS.txt )
+      - uses: actions/upload-artifact@v7
+        with:
+          name: morph-bonsai-archives
+          path: out/*
+          if-no-files-found: error
+      - uses: softprops/action-gh-release@v3
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          name: "morph-bonsai ${{ github.ref_name }}"
+          files: out/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true

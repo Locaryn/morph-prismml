@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "refreshUrl": "https://raw.githubusercontent.com/Locaryn/morph-bonsai/main/dist/marketplace.json",
+  "owns": [
+    "bonsai"
+  ],
+  "categories": [
+    {
+      "id": "bonsai",
+      "label": "Bonsai (1-bit et ternaire)",
+      "icon": "cpu",
+      "matches": [
+        "bonsai"
+      ],
+      "requires": [
+        "bonsai"
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "bonsai-27b",
+      "name": "Bonsai 27B",
+      "brand": "PrismML",
+      "releaseDate": "2026-07-04",
+      "description": "27 milliards de paramètres dérivés de Qwen 3.6, en 1 bit par poids : 3,8 Go. Multimodal, contexte de 262 144 jetons, appels d'outils. C'est le seul 27B qui tient entièrement dans une carte de 6 Go : mesuré par Locaryn sur une RTX 4050 portable, 4,3 Go de mémoire vidéo et environ 30 jetons par seconde à 8 192 de contexte. Les 1-bit perdent en précision (une langue qui dérape de temps en temps) : à essayer avant d'en dépendre. Ses variantes ternaires sont plus fidèles et plus lourdes.",
+      "variants": [
+        {
+          "size": "1-bit · 27B",
+          "params": 27,
+          "storageGb": 4.4,
+          "quants": [
+            "q1_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Bonsai-27B-gguf/resolve/main/Bonsai-27B-Q1_0.gguf",
+          "downloads": [
+            {
+              "url": "https://huggingface.co/prism-ml/Bonsai-27B-gguf/resolve/main/Bonsai-27B-mmproj-Q8_0.gguf",
+              "file": "Bonsai-27B-mmproj-Q8_0.gguf",
+              "label": "Projecteur d'images (facultatif)"
+            }
+          ]
+        },
+        {
+          "size": "Ternaire · 27B",
+          "params": 27,
+          "storageGb": 7.8,
+          "quants": [
+            "q2_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf/resolve/main/Ternary-Bonsai-27B-Q2_0.gguf",
+          "downloads": [
+            {
+              "url": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf/resolve/main/Ternary-Bonsai-27B-mmproj-Q8_0.gguf",
+              "file": "Ternary-Bonsai-27B-mmproj-Q8_0.gguf",
+              "label": "Projecteur d'images (facultatif)"
+            }
+          ]
+        }
+      ],
+      "license": "Apache-2.0",
+      "releaseYear": 2026,
+      "capabilities": [
+        "bonsai"
+      ]
+    },
+    {
+      "id": "ternary-bonsai-2-27b",
+      "name": "Ternary Bonsai 2 27B",
+      "brand": "PrismML",
+      "releaseDate": "2026-09-16",
+      "description": "La génération la plus récente : 27 milliards de paramètres en ternaire (1,76 bit par poids), multimodal, contexte de 262 144 jetons. Exige le runtime Bonsai de cette extension (le llama.cpp ordinaire ne lit pas ce format). Le plus petit fichier fait 5,95 Go : sur une carte de 6 Go il ne reste pas assez de place pour le contexte, une partie des couches passe alors sur le processeur et la vitesse chute. Prévoir 8 Go de mémoire vidéo ou plus pour tout garder sur la carte. Chiffres de qualité annoncés par l'éditeur, non vérifiés par Locaryn.",
+      "variants": [
+        {
+          "size": "PTQ1_0 · 27B",
+          "params": 27,
+          "storageGb": 6.6,
+          "quants": [
+            "ptq1_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Ternary-Bonsai-2-27B-gguf/resolve/main/Ternary-Bonsai-2-27B-PTQ1_0.gguf",
+          "downloads": [
+            {
+              "url": "https://huggingface.co/prism-ml/Ternary-Bonsai-2-27B-gguf/resolve/main/Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf",
+              "file": "Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf",
+              "label": "Projecteur d'images (facultatif)"
+            }
+          ]
+        },
+        {
+          "size": "PQ2_0 · 27B",
+          "params": 27,
+          "storageGb": 7.8,
+          "quants": [
+            "pq2_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Ternary-Bonsai-2-27B-gguf/resolve/main/Ternary-Bonsai-2-27B-PQ2_0.gguf",
+          "downloads": [
+            {
+              "url": "https://huggingface.co/prism-ml/Ternary-Bonsai-2-27B-gguf/resolve/main/Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf",
+              "file": "Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf",
+              "label": "Projecteur d'images (facultatif)"
+            }
+          ]
+        }
+      ],
+      "license": "Apache-2.0",
+      "releaseYear": 2026,
+      "capabilities": [
+        "bonsai"
+      ]
+    },
+    {
+      "id": "bonsai-8b",
+      "name": "Bonsai 8B",
+      "brand": "PrismML",
+      "releaseDate": "2026-03-18",
+      "description": "8 milliards de paramètres en 1 bit : 1,16 Go, de quoi tourner sur à peu près n'importe quelle carte ou même sans carte. La version ternaire (2,18 Go) est plus fidèle.",
+      "variants": [
+        {
+          "size": "1-bit · 8B",
+          "params": 8,
+          "storageGb": 1.16,
+          "quants": [
+            "q1_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Bonsai-8B-gguf/resolve/main/Bonsai-8B-Q1_0.gguf"
+        },
+        {
+          "size": "Ternaire · 8B",
+          "params": 8,
+          "storageGb": 2.18,
+          "quants": [
+            "pq2_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Ternary-Bonsai-8B-gguf/resolve/main/Ternary-Bonsai-8B-PQ2_0.gguf"
+        }
+      ],
+      "license": "Apache-2.0",
+      "releaseYear": 2026,
+      "capabilities": [
+        "bonsai"
+      ]
+    },
+    {
+      "id": "bonsai-4b",
+      "name": "Bonsai 4B",
+      "brand": "PrismML",
+      "releaseDate": "2026-03-29",
+      "description": "4 milliards de paramètres, pensé pour les petites mémoires : 0,57 Go en 1 bit, 1,07 Go en ternaire.",
+      "variants": [
+        {
+          "size": "1-bit · 4B",
+          "params": 4,
+          "storageGb": 0.57,
+          "quants": [
+            "q1_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Bonsai-4B-gguf/resolve/main/Bonsai-4B-Q1_0.gguf"
+        },
+        {
+          "size": "Ternaire · 4B",
+          "params": 4,
+          "storageGb": 1.07,
+          "quants": [
+            "pq2_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Ternary-Bonsai-4B-gguf/resolve/main/Ternary-Bonsai-4B-PQ2_0.gguf"
+        }
+      ],
+      "license": "Apache-2.0",
+      "releaseYear": 2026,
+      "capabilities": [
+        "bonsai"
+      ]
+    },
+    {
+      "id": "bonsai-1-7b",
+      "name": "Bonsai 1.7B",
+      "brand": "PrismML",
+      "releaseDate": "2026-03-29",
+      "description": "Le plus petit : 0,25 Go en 1 bit, 0,46 Go en ternaire. Pour essayer le moteur ou pour les machines les plus modestes.",
+      "variants": [
+        {
+          "size": "1-bit · 1.7B",
+          "params": 1.7,
+          "storageGb": 0.25,
+          "quants": [
+            "q1_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Bonsai-1.7B-gguf/resolve/main/Bonsai-1.7B-Q1_0.gguf"
+        },
+        {
+          "size": "Ternaire · 1.7B",
+          "params": 1.7,
+          "storageGb": 0.46,
+          "quants": [
+            "pq2_0"
+          ],
+          "tag": "https://huggingface.co/prism-ml/Ternary-Bonsai-1.7B-gguf/resolve/main/Ternary-Bonsai-1.7B-PQ2_0.gguf"
+        }
+      ],
+      "license": "Apache-2.0",
+      "releaseYear": 2026,
+      "capabilities": [
+        "bonsai"
+      ]
+    }
+  ]
+}
