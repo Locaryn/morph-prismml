@@ -19,7 +19,10 @@ pub struct Settings {
     /// environ 0,6 Go de mémoire vidéo : coupé par défaut.
     #[serde(default, deserialize_with = "booleen")]
     pub vision: bool,
-    /// Couches placées sur la carte. 999 : toutes.
+    /// Couches placées sur la carte. 0 (défaut) : llama.cpp mesure la mémoire
+    /// libre et répartit lui-même — un modèle trop gros pour la carte passe en
+    /// partie sur le processeur au lieu d'échouer. Un nombre impose le choix
+    /// (999 : toutes, au risque d'un échec de mémoire).
     #[serde(default = "couches_defaut", deserialize_with = "nombre")]
     pub gpu_layers: u32,
     /// Requêtes traitées en parallèle. Chaque emplacement a son cache : 1 est
@@ -43,7 +46,7 @@ fn contexte_defaut() -> u32 {
     8192
 }
 fn couches_defaut() -> u32 {
-    999
+    0
 }
 fn parallele_defaut() -> u32 {
     1
@@ -135,6 +138,7 @@ mod tests {
         let s = Settings::default();
         assert_eq!(s.context_size, 8192);
         assert_eq!(s.parallel, 1);
+        assert_eq!(s.gpu_layers, 0, "la répartition est laissée à llama.cpp");
         assert_eq!(s.thinking, "off");
         assert!(
             !s.vision,

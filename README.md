@@ -27,6 +27,7 @@ Le 27B 1 bit répond en bon français avec des écarts occasionnels (un mot angl
 | `thinking` | `off` | Raisonnement : `off`, `on`, `auto`. Activé, Bonsai raisonne longuement et chaque réponse prend plusieurs fois plus de temps |
 | `vision` | `false` | Charge le projecteur d'images (≈ 0,6 Go de mémoire vidéo) |
 | `backend` | `auto` | `auto`, `cuda`, `vulkan`, `cpu` |
+| `gpu_layers` | 0 | 0 : automatique (tout sur la carte si le modèle tient largement dans la mémoire libre, sinon llama.cpp répartit) ; un nombre impose le choix |
 | `parallel` | 1 | Requêtes en parallèle ; chaque emplacement a son cache |
 
 ## Lanceur en ligne de commande

@@ -2,7 +2,7 @@
   "$schema": "https://locaryn.dev/schema/morph.json/v0.1",
   "apiVersion": "0.1",
   "name": "morph-bonsai",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "description": "Runtime Bonsai : les modèles 1-bit et ternaires de PrismML (jusqu'à 27 milliards de paramètres en 3,8 Go) et leur catalogue. Télécharge au premier usage le llama.cpp de PrismML, avec empreinte vérifiée, et choisit CUDA, Vulkan ou Metal selon la machine.",
   "author": "Locaryn Team",
   "license": "Apache-2.0",
@@ -156,6 +156,13 @@
             "label": "Requêtes en parallèle",
             "default": "1",
             "hint": "Chaque emplacement a son propre cache : 1 est ce qui tient dans une petite carte."
+          },
+          {
+            "id": "gpu_layers",
+            "type": "number",
+            "label": "Couches sur la carte",
+            "default": "0",
+            "hint": "0 : automatique — tout sur la carte si le modèle tient largement, sinon llama.cpp répartit entre carte et processeur. Un nombre impose le choix (999 : toutes, au risque d'un manque de mémoire)."
           }
         ]
       }
@@ -169,6 +176,14 @@
   "beta": true,
   "stability": "untested",
   "versions": [
+    {
+      "version": "0.1.0-beta.2",
+      "is_beta": true,
+      "summary": "Répartition des couches choisie selon la mémoire vidéo libre : un modèle qui tient va entièrement sur la carte (30 jetons/s), un modèle trop gros est réparti par llama.cpp au lieu d'échouer",
+      "tag": "v0.1.0-beta.2",
+      "released_at": "2026-10-04",
+      "install_source": "Locaryn/morph-bonsai#v0.1.0-beta.2"
+    },
     {
       "version": "0.1.0-beta.1",
       "is_beta": true,

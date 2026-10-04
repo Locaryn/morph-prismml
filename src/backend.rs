@@ -37,6 +37,46 @@ pub fn nvidia_driver_major() -> Option<u32> {
     major_du_pilote(&String::from_utf8_lossy(&out.stdout))
 }
 
+/// Mémoire vidéo libre de la première carte NVIDIA, en Mio.
+pub fn nvidia_free_mib() -> Option<u64> {
+    let out = Command::new("nvidia-smi")
+        .args(["--query-gpu=memory.free", "--format=csv,noheader,nounits"])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .next()?
+        .trim()
+        .parse()
+        .ok()
+}
+
+/// Part de la mémoire libre au-delà de laquelle un modèle n'est plus « sûr »
+/// de tenir avec son cache : on laisse alors llama.cpp répartir les couches.
+const PART_SURE: f64 = 0.75;
+
+/// Nombre de couches à imposer. `demande` > 0 : tel quel. Sinon 999 (toutes)
+/// quand le modèle tient largement dans la mémoire libre, et `None` (llama.cpp
+/// répartit) quand il est trop gros ou que la mémoire est inconnue.
+///
+/// Mesuré : laisser llama.cpp répartir un modèle qui tient pourtant garde une
+/// marge prudente et en laisse des couches sur le processeur — 6 jetons/s au
+/// lieu de 30 pour un 27B en 1 bit sur 6 Go.
+pub fn layers_to_force(
+    demande: u32,
+    taille_modele_mib: u64,
+    libre_mib: Option<u64>,
+) -> Option<u32> {
+    if demande > 0 {
+        return Some(demande);
+    }
+    let libre = libre_mib?;
+    ((taille_modele_mib as f64) < libre as f64 * PART_SURE).then_some(999)
+}
+
 fn major_du_pilote(sortie: &str) -> Option<u32> {
     sortie
         .lines()
@@ -123,6 +163,18 @@ mod tests {
         assert_eq!(major_du_pilote("550.54.14\n550.54.14\n"), Some(550));
         assert_eq!(major_du_pilote(""), None);
         assert_eq!(major_du_pilote("N/A"), None);
+    }
+
+    #[test]
+    fn un_modele_qui_tient_largement_va_tout_entier_sur_la_carte() {
+        // 27B en 1 bit (3,8 Go) sur 6 Go libres.
+        assert_eq!(layers_to_force(0, 3627, Some(5900)), Some(999));
+        // Ternary Bonsai 2 (5,95 Go) : trop juste, llama.cpp répartit.
+        assert_eq!(layers_to_force(0, 5675, Some(5900)), None);
+        // Mémoire inconnue (pas de NVIDIA) : llama.cpp répartit.
+        assert_eq!(layers_to_force(0, 100, None), None);
+        // Un choix explicite l'emporte.
+        assert_eq!(layers_to_force(20, 9999, Some(100)), Some(20));
     }
 
     #[test]

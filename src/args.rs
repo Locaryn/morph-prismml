@@ -29,7 +29,13 @@ pub fn find_mmproj(modele: &Path) -> Option<PathBuf> {
 }
 
 /// Les arguments, sans l'exécutable.
-pub fn build(modele: &Path, port: u16, s: &Settings, mmproj: Option<&Path>) -> Vec<String> {
+pub fn build(
+    modele: &Path,
+    port: u16,
+    s: &Settings,
+    mmproj: Option<&Path>,
+    couches: Option<u32>,
+) -> Vec<String> {
     let mut a: Vec<String> = vec![
         "-m".into(),
         modele.to_string_lossy().into(),
@@ -39,13 +45,16 @@ pub fn build(modele: &Path, port: u16, s: &Settings, mmproj: Option<&Path>) -> V
         port.to_string(),
         "-c".into(),
         s.context_size.to_string(),
-        "-ngl".into(),
-        s.gpu_layers.to_string(),
         "--parallel".into(),
         s.parallel.max(1).to_string(),
         // Les appels d'outils d'une conversation passent par le gabarit de chat.
         "--jinja".into(),
     ];
+    // Sans -ngl, llama.cpp ajuste le nombre de couches à la mémoire libre.
+    if let Some(n) = couches {
+        a.push("-ngl".into());
+        a.push(n.to_string());
+    }
     if matches!(s.thinking.as_str(), "on" | "off" | "auto") {
         a.push("--reasoning".into());
         a.push(s.thinking.clone());
@@ -65,7 +74,7 @@ mod tests {
 
     #[test]
     fn la_ligne_de_commande_tient_sur_une_petite_carte() {
-        let a = build(Path::new("m.gguf"), 8189, &Settings::default(), None);
+        let a = build(Path::new("m.gguf"), 8189, &Settings::default(), None, None);
         let joint = a.join(" ");
         assert!(
             joint.contains("--host 127.0.0.1"),
@@ -76,15 +85,25 @@ mod tests {
         assert!(joint.contains("--jinja"));
         assert!(joint.contains("--reasoning off"));
         assert!(!joint.contains("--mmproj"));
+        assert!(
+            !joint.contains("-ngl"),
+            "par défaut llama.cpp répartit lui-même"
+        );
+    }
+
+    #[test]
+    fn un_nombre_de_couches_impose_le_choix() {
+        let joint = build(Path::new("m.gguf"), 1, &Settings::default(), None, Some(20)).join(" ");
+        assert!(joint.contains("-ngl 20"));
     }
 
     #[test]
     fn le_projecteur_n_est_charge_que_sur_demande() {
         let mut s = Settings::default();
         let p = Path::new("m-mmproj.gguf");
-        assert!(!build(Path::new("m.gguf"), 1, &s, Some(p)).contains(&"--mmproj".to_string()));
+        assert!(!build(Path::new("m.gguf"), 1, &s, Some(p), None).contains(&"--mmproj".to_string()));
         s.vision = true;
-        assert!(build(Path::new("m.gguf"), 1, &s, Some(p)).contains(&"--mmproj".to_string()));
+        assert!(build(Path::new("m.gguf"), 1, &s, Some(p), None).contains(&"--mmproj".to_string()));
     }
 
     #[test]

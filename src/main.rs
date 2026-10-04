@@ -96,7 +96,17 @@ fn serve(
             "[bonsai] vision demandée mais aucun projecteur d'images à côté du modèle : texte seul"
         );
     }
-    let ligne = args::build(&modele, port, reglages, mmproj.as_deref());
+    let taille_mib = std::fs::metadata(&modele).map_or(0, |m| m.len() / (1024 * 1024));
+    let libre = (choix == backend::Backend::Cuda)
+        .then(backend::nvidia_free_mib)
+        .flatten();
+    let couches = backend::layers_to_force(reglages.gpu_layers, taille_mib, libre);
+    eprintln!(
+        "[bonsai] modèle {taille_mib} Mio · mémoire vidéo libre {} · couches sur la carte : {}",
+        libre.map_or("inconnue".to_string(), |l| format!("{l} Mio")),
+        couches.map_or("laissées à llama.cpp".to_string(), |n| n.to_string())
+    );
+    let ligne = args::build(&modele, port, reglages, mmproj.as_deref(), couches);
     let mut enfant = proc::spawn(&serveur, &ligne)?;
     let statut = enfant
         .wait()
