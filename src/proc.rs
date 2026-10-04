@@ -6,10 +6,27 @@
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 
+/// Empêcher Windows d'ouvrir une fenêtre de console pour un sous-processus.
+///
+/// Le lanceur tourne lui-même sans console : tout programme console qu'il
+/// démarre — `llama-server`, `nvidia-smi` — s'en voit alors allouer une neuve,
+/// visible. Sans effet hors de Windows.
+pub fn masquer_console(cmd: &mut Command) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    #[cfg(not(windows))]
+    let _ = cmd;
+}
+
 /// Démarre le serveur, lié à la vie du lanceur.
 pub fn spawn(serveur: &Path, args: &[String]) -> Result<Child, String> {
     let mut cmd = Command::new(serveur);
     cmd.args(args).stdin(Stdio::null());
+    masquer_console(&mut cmd);
     // Les bibliothèques (CUDA, ggml) sont à côté de l'exécutable.
     if let Some(dossier) = serveur.parent() {
         cmd.current_dir(dossier);

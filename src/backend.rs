@@ -27,10 +27,10 @@ const PILOTE_CUDA_MIN: u32 = 551;
 
 /// Version majeure du pilote NVIDIA, si une carte répond.
 pub fn nvidia_driver_major() -> Option<u32> {
-    let out = Command::new("nvidia-smi")
-        .args(["--query-gpu=driver_version", "--format=csv,noheader"])
-        .output()
-        .ok()?;
+    let mut cmd = Command::new("nvidia-smi");
+    cmd.args(["--query-gpu=driver_version", "--format=csv,noheader"]);
+    crate::proc::masquer_console(&mut cmd);
+    let out = cmd.output().ok()?;
     if !out.status.success() {
         return None;
     }
@@ -39,10 +39,10 @@ pub fn nvidia_driver_major() -> Option<u32> {
 
 /// Mémoire vidéo libre de la première carte NVIDIA, en Mio.
 pub fn nvidia_free_mib() -> Option<u64> {
-    let out = Command::new("nvidia-smi")
-        .args(["--query-gpu=memory.free", "--format=csv,noheader,nounits"])
-        .output()
-        .ok()?;
+    let mut cmd = Command::new("nvidia-smi");
+    cmd.args(["--query-gpu=memory.free", "--format=csv,noheader,nounits"]);
+    crate::proc::masquer_console(&mut cmd);
+    let out = cmd.output().ok()?;
     if !out.status.success() {
         return None;
     }
