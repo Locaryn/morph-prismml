@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "refreshUrl": "https://raw.githubusercontent.com/Locaryn/morph-bonsai/main/dist/marketplace.json",
+  "refreshUrl": "https://raw.githubusercontent.com/Locaryn/morph-prismml/main/dist/marketplace.json",
   "owns": [
     "bonsai"
   ],
@@ -24,6 +24,15 @@
       "brand": "PrismML",
       "releaseDate": "2026-07-04",
       "description": "27 milliards de paramètres dérivés de Qwen 3.6, en 1 bit par poids : 3,8 Go. Multimodal, contexte de 262 144 jetons, appels d'outils. C'est le seul 27B qui tient entièrement dans une carte de 6 Go : mesuré par Locaryn sur une RTX 4050 portable, 4,3 Go de mémoire vidéo et environ 30 jetons par seconde à 8 192 de contexte. Les 1-bit perdent en précision (une langue qui dérape de temps en temps) : à essayer avant d'en dépendre. Ses variantes ternaires sont plus fidèles et plus lourdes.",
+      "recommendedParams": {
+        "temperature": 0.5,
+        "topP": 0.85,
+        "topK": 20,
+        "minP": 0,
+        "repeatPenalty": 1.0,
+        "source": "PrismML",
+        "sourceUrl": "https://docs.prismml.com/run/llamacpp"
+      },
       "variants": [
         {
           "size": "1-bit · 27B",
@@ -70,6 +79,15 @@
       "brand": "PrismML",
       "releaseDate": "2026-09-16",
       "description": "La génération la plus récente : 27 milliards de paramètres en ternaire (1,76 bit par poids), multimodal, contexte de 262 144 jetons. Exige le runtime Bonsai de cette extension (le llama.cpp ordinaire ne lit pas ce format). Le plus petit fichier fait 5,95 Go : sur une carte de 6 Go il ne reste pas assez de place pour le contexte, une partie des couches passe alors sur le processeur et la vitesse chute. Prévoir 8 Go de mémoire vidéo ou plus pour tout garder sur la carte. Chiffres de qualité annoncés par l'éditeur, non vérifiés par Locaryn.",
+      "recommendedParams": {
+        "temperature": 0.5,
+        "topP": 0.85,
+        "topK": 20,
+        "minP": 0,
+        "repeatPenalty": 1.0,
+        "source": "PrismML",
+        "sourceUrl": "https://docs.prismml.com/run/llamacpp"
+      },
       "variants": [
         {
           "size": "PTQ1_0 · 27B",
@@ -116,6 +134,15 @@
       "brand": "PrismML",
       "releaseDate": "2026-03-18",
       "description": "8 milliards de paramètres en 1 bit : 1,16 Go, de quoi tourner sur à peu près n'importe quelle carte ou même sans carte. La version ternaire (2,18 Go) est plus fidèle.",
+      "recommendedParams": {
+        "temperature": 0.5,
+        "topP": 0.85,
+        "topK": 20,
+        "minP": 0,
+        "repeatPenalty": 1.0,
+        "source": "PrismML",
+        "sourceUrl": "https://docs.prismml.com/run/llamacpp"
+      },
       "variants": [
         {
           "size": "1-bit · 8B",
@@ -148,6 +175,15 @@
       "brand": "PrismML",
       "releaseDate": "2026-03-29",
       "description": "4 milliards de paramètres, pensé pour les petites mémoires : 0,57 Go en 1 bit, 1,07 Go en ternaire.",
+      "recommendedParams": {
+        "temperature": 0.5,
+        "topP": 0.85,
+        "topK": 20,
+        "minP": 0,
+        "repeatPenalty": 1.0,
+        "source": "PrismML",
+        "sourceUrl": "https://docs.prismml.com/run/llamacpp"
+      },
       "variants": [
         {
           "size": "1-bit · 4B",
@@ -180,6 +216,15 @@
       "brand": "PrismML",
       "releaseDate": "2026-03-29",
       "description": "Le plus petit : 0,25 Go en 1 bit, 0,46 Go en ternaire. Pour essayer le moteur ou pour les machines les plus modestes.",
+      "recommendedParams": {
+        "temperature": 0.5,
+        "topP": 0.85,
+        "topK": 20,
+        "minP": 0,
+        "repeatPenalty": 1.0,
+        "source": "PrismML",
+        "sourceUrl": "https://docs.prismml.com/run/llamacpp"
+      },
       "variants": [
         {
           "size": "1-bit · 1.7B",

@@ -1,13 +1,13 @@
 {
   "$schema": "https://locaryn.dev/schema/morph.json/v0.1",
   "apiVersion": "0.1",
-  "name": "morph-bonsai",
-  "version": "0.1.0-beta.2",
-  "description": "Runtime Bonsai : les modèles 1-bit et ternaires de PrismML (jusqu'à 27 milliards de paramètres en 3,8 Go) et leur catalogue. Télécharge au premier usage le llama.cpp de PrismML, avec empreinte vérifiée, et choisit CUDA, Vulkan ou Metal selon la machine.",
+  "name": "morph-prismml",
+  "version": "0.2.0-beta.1",
+  "description": "Runtime PrismML : les modèles Bonsai 1-bit et ternaires de PrismML (jusqu'à 27 milliards de paramètres en 3,8 Go), leur catalogue et les réglages recommandés par leurs créateurs. Télécharge au premier usage le llama.cpp de PrismML, avec empreinte vérifiée, et choisit CUDA, Vulkan ou Metal selon la machine.",
   "author": "Locaryn Team",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/Locaryn/morph-bonsai",
-  "repository": "https://github.com/Locaryn/morph-bonsai",
+  "homepage": "https://github.com/Locaryn/morph-prismml",
+  "repository": "https://github.com/Locaryn/morph-prismml",
   "keywords": [
     "bonsai",
     "prismml",
@@ -43,7 +43,7 @@
   ],
   "engine": {
     "id": "bonsai",
-    "label": "Bonsai (PrismML llama.cpp)",
+    "label": "PrismML (llama.cpp)",
     "driver": "openai_compat",
     "api_url": "http://127.0.0.1:8189",
     "port": 8189,
@@ -89,17 +89,17 @@
         "slot": "marketplace.catalogs",
         "order": 30,
         "type": "data",
-        "label": "Modèles Bonsai",
+        "label": "Modèles PrismML",
         "icon": "cpu",
         "entry": "dist/marketplace.json",
-        "hint": "Ajoute le filtre « Bonsai » et ses modèles 1-bit et ternaires au catalogue"
+        "hint": "Ajoute le filtre « Bonsai » et les modèles 1-bit et ternaires de PrismML au catalogue, avec leurs réglages recommandés"
       },
       {
         "id": "bonsai-runtime-card",
         "slot": "engines.runtimes",
         "order": 30,
         "type": "action",
-        "label": "Bonsai (PrismML llama.cpp)",
+        "label": "PrismML (llama.cpp)",
         "icon": "cpu",
         "category": "Modèles 1-bit et ternaires",
         "value": "llama-server (fork prism, CUDA / Vulkan / Metal)",
@@ -109,7 +109,7 @@
     "settings_sections": [
       {
         "id": "bonsai",
-        "label": "Moteur Bonsai",
+        "label": "Moteur PrismML",
         "fields": [
           {
             "id": "context_size",
@@ -176,6 +176,14 @@
   "beta": true,
   "stability": "untested",
   "versions": [
+    {
+      "version": "0.2.0-beta.1",
+      "is_beta": true,
+      "summary": "Renommé PrismML. Les réglages d'échantillonnage recommandés par PrismML (température 0,5, top-p 0,85, top-k 20, min-p 0, sans pénalité de répétition) sont déclarés pour chaque modèle du catalogue, que Locaryn applique, et deviennent les valeurs par défaut du serveur",
+      "tag": "v0.2.0-beta.1",
+      "released_at": "2026-10-05",
+      "install_source": "Locaryn/morph-prismml#v0.2.0-beta.1"
+    },
     {
       "version": "0.1.0-beta.2",
       "is_beta": true,

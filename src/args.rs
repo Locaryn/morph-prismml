@@ -28,6 +28,23 @@ pub fn find_mmproj(modele: &Path) -> Option<PathBuf> {
     trouves.into_iter().next().map(|(_, p)| p)
 }
 
+/// L'échantillonnage recommandé par PrismML pour ses modèles
+/// (docs.prismml.com/run/llamacpp) : température 0,5, top-p 0,85, top-k 20,
+/// min-p 0, et aucune pénalité de répétition. Ce sont les valeurs par défaut
+/// du serveur : un client qui envoie les siennes garde la main.
+const ECHANTILLONNAGE_PRISMML: [&str; 10] = [
+    "--temp",
+    "0.5",
+    "--top-p",
+    "0.85",
+    "--top-k",
+    "20",
+    "--min-p",
+    "0",
+    "--repeat-penalty",
+    "1.0",
+];
+
 /// Les arguments, sans l'exécutable.
 pub fn build(
     modele: &Path,
@@ -50,6 +67,7 @@ pub fn build(
         // Les appels d'outils d'une conversation passent par le gabarit de chat.
         "--jinja".into(),
     ];
+    a.extend(ECHANTILLONNAGE_PRISMML.iter().map(|s| s.to_string()));
     // Sans -ngl, llama.cpp ajuste le nombre de couches à la mémoire libre.
     if let Some(n) = couches {
         a.push("-ngl".into());
@@ -82,6 +100,7 @@ mod tests {
         );
         assert!(joint.contains("-c 8192"));
         assert!(joint.contains("--parallel 1"));
+        assert!(joint.contains("--top-k 20") && joint.contains("--repeat-penalty 1.0"));
         assert!(joint.contains("--jinja"));
         assert!(joint.contains("--reasoning off"));
         assert!(!joint.contains("--mmproj"));

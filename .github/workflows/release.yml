@@ -103,7 +103,7 @@ jobs:
           for dir in dl/bundle-*; do
             label="${dir#dl/bundle-}"
             chmod +x "$dir"/bin/* || true
-            ( cd "$dir" && zip -r -q "$GITHUB_WORKSPACE/out/morph-bonsai-v${VERSION}-${label}.zip" . )
+            ( cd "$dir" && zip -r -q "$GITHUB_WORKSPACE/out/morph-prismml-v${VERSION}-${label}.zip" . )
           done
           ls -l out
       - name: Vérifier les archives
@@ -121,7 +121,7 @@ jobs:
           ( cd out && sha256sum *.zip | tee SHA256SUMS.txt )
       - uses: actions/upload-artifact@v7
         with:
-          name: morph-bonsai-archives
+          name: morph-prismml-archives
           path: out/*
           if-no-files-found: error
       - uses: softprops/action-gh-release@v3
@@ -129,7 +129,7 @@ jobs:
         with:
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
-          name: "morph-bonsai ${{ github.ref_name }}"
+          name: "morph-prismml ${{ github.ref_name }}"
           files: out/*
           generate_release_notes: true
           fail_on_unmatched_files: true

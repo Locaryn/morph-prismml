@@ -1,11 +1,11 @@
 ---
 name: bonsai
-description: Moteur d'inférence Bonsai (modèles 1-bit et ternaires de PrismML) fourni par l'extension morph-bonsai.
+description: Moteur d'inférence Bonsai (modèles 1-bit et ternaires de PrismML) fourni par l'extension morph-prismml.
 ---
 
 # Moteur Bonsai
 
-Cette extension n'ajoute pas d'outil à appeler : elle fournit un **moteur** (Réglages → Moteur → « Bonsai ») et des modèles à son catalogue. Quand elle est active et qu'un modèle Bonsai est choisi, c'est `llama-server` (fork PrismML de llama.cpp) qui répond, en local.
+Cette extension n'ajoute pas d'outil à appeler : elle fournit un **moteur** (Réglages → Moteur → « PrismML ») et des modèles à son catalogue. Quand elle est active et qu'un modèle Bonsai est choisi, c'est `llama-server` (fork PrismML de llama.cpp) qui répond, en local.
 
 Pour l'utilisateur qui demande pourquoi une réponse est lente ou ne démarre pas :
 
