@@ -33,6 +33,11 @@
         "source": "PrismML",
         "sourceUrl": "https://docs.prismml.com/run/llamacpp"
       },
+      "attention": {
+        "layers": 16,
+        "kvHeads": 4,
+        "headDim": 256
+      },
       "variants": [
         {
           "size": "1-bit · 27B",
@@ -87,6 +92,11 @@
         "repeatPenalty": 1.0,
         "source": "PrismML",
         "sourceUrl": "https://docs.prismml.com/run/llamacpp"
+      },
+      "attention": {
+        "layers": 16,
+        "kvHeads": 4,
+        "headDim": 256
       },
       "variants": [
         {
@@ -143,6 +153,11 @@
         "source": "PrismML",
         "sourceUrl": "https://docs.prismml.com/run/llamacpp"
       },
+      "attention": {
+        "layers": 36,
+        "kvHeads": 8,
+        "headDim": 128
+      },
       "variants": [
         {
           "size": "1-bit · 8B",
@@ -184,6 +199,11 @@
         "source": "PrismML",
         "sourceUrl": "https://docs.prismml.com/run/llamacpp"
       },
+      "attention": {
+        "layers": 36,
+        "kvHeads": 8,
+        "headDim": 128
+      },
       "variants": [
         {
           "size": "1-bit · 4B",
@@ -224,6 +244,11 @@
         "repeatPenalty": 1.0,
         "source": "PrismML",
         "sourceUrl": "https://docs.prismml.com/run/llamacpp"
+      },
+      "attention": {
+        "layers": 28,
+        "kvHeads": 8,
+        "headDim": 128
       },
       "variants": [
         {
