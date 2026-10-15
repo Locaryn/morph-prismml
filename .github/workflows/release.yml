@@ -115,7 +115,7 @@ jobs:
       - name: Vérifier les archives
         run: |
           set -euo pipefail
-          test "$(ls out/*.zip | wc -l)" -eq 4
+          test "$(ls out/*.zip | wc -l)" -eq 5
           for archive in out/*.zip; do
             unzip -l "$archive" | grep -q "morph.json"
             unzip -l "$archive" | grep -q "dist/marketplace.json"
