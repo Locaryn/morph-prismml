@@ -55,6 +55,12 @@ jobs:
             target: aarch64-apple-darwin
             label: macos-aarch64
             binary: locaryn-bonsai-launch
+          # Snapdragon sous Windows : sans ce paquet, Locaryn ARM64 prenait le
+          # paquet x64, dont le lanceur tournait émulé.
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            label: windows-aarch64
+            binary: locaryn-bonsai-launch.exe
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.88

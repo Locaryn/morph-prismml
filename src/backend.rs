@@ -25,6 +25,23 @@ impl Backend {
 /// Pilote NVIDIA minimal pour le build CUDA 12.4.
 const PILOTE_CUDA_MIN: u32 = 551;
 
+/// L'architecture de la *machine*, pas celle de ce programme : un lanceur x64
+/// émulé sur un Snapdragon doit quand même télécharger le runtime ARM64,
+/// natif et bien plus rapide. Windows le dit dans `PROCESSOR_ARCHITEW6432`
+/// (processus émulé) ou `PROCESSOR_ARCHITECTURE`.
+pub fn host_arch() -> &'static str {
+    if cfg!(windows) {
+        for var in ["PROCESSOR_ARCHITEW6432", "PROCESSOR_ARCHITECTURE"] {
+            if let Ok(v) = std::env::var(var) {
+                if v.eq_ignore_ascii_case("ARM64") {
+                    return "aarch64";
+                }
+            }
+        }
+    }
+    std::env::consts::ARCH
+}
+
 /// Version majeure du pilote NVIDIA, si une carte répond.
 pub fn nvidia_driver_major() -> Option<u32> {
     let mut cmd = Command::new("nvidia-smi");
@@ -89,9 +106,25 @@ fn major_du_pilote(sortie: &str) -> Option<u32> {
 }
 
 /// Le backend à utiliser. `demande` vient des réglages (`auto` par défaut).
-pub fn choose(demande: &str, os: &str, pilote_nvidia: Option<u32>) -> Result<Backend, String> {
+pub fn choose(
+    demande: &str,
+    os: &str,
+    arch: &str,
+    pilote_nvidia: Option<u32>,
+) -> Result<Backend, String> {
     if os == "macos" {
         return Ok(Backend::Metal);
+    }
+    // Windows ARM (Snapdragon) : PrismML ne publie qu'un runtime processeur
+    // pour cette plateforme — ni Vulkan, ni OpenCL. Choisir Vulkan, comme sur
+    // un PC x64, menait à « pas de runtime publié » et à aucun modèle chargé.
+    if os == "windows" && arch == "aarch64" {
+        return match demande.trim() {
+            "" | "auto" | "cpu" => Ok(Backend::Cpu),
+            autre => Err(format!(
+                "le backend « {autre} » n'est pas publié par PrismML pour Windows ARM : seul « cpu » l'est."
+            )),
+        };
     }
     match demande.trim() {
         "" | "auto" => Ok(match pilote_nvidia {
@@ -141,9 +174,10 @@ pub fn assets(tag: &str, backend: Backend, os: &str, arch: &str) -> Result<Vec<S
             vec![format!("llama-{tag}-bin-ubuntu-vulkan-x64.tar.gz")]
         }
         ("linux", Backend::Cpu) if x64 => vec![format!("llama-{tag}-bin-ubuntu-x64.tar.gz")],
-        ("linux", Backend::Cpu | Backend::Vulkan) if arm => {
-            vec![format!("llama-{tag}-bin-ubuntu-arm64.tar.gz")]
+        ("linux", Backend::Vulkan) if arm => {
+            vec![format!("llama-{tag}-bin-ubuntu-vulkan-arm64.tar.gz")]
         }
+        ("linux", Backend::Cpu) if arm => vec![format!("llama-{tag}-bin-ubuntu-arm64.tar.gz")],
         ("macos", Backend::Metal) if arm => vec![format!("llama-{tag}-bin-macos-arm64.tar.gz")],
         ("macos", Backend::Metal) if x64 => vec![format!("llama-{tag}-bin-macos-x64.tar.gz")],
         _ => return Err(sans_support()),
@@ -179,21 +213,30 @@ mod tests {
 
     #[test]
     fn nvidia_recent_donne_cuda_sinon_vulkan() {
-        assert_eq!(choose("auto", "windows", Some(616)), Ok(Backend::Cuda));
-        assert_eq!(choose("auto", "windows", Some(535)), Ok(Backend::Vulkan));
-        assert_eq!(choose("auto", "linux", None), Ok(Backend::Vulkan));
-        assert_eq!(choose("auto", "macos", None), Ok(Backend::Metal));
+        assert_eq!(choose("auto", "windows", "x86_64", Some(616)), Ok(Backend::Cuda));
+        assert_eq!(choose("auto", "windows", "x86_64", Some(535)), Ok(Backend::Vulkan));
+        assert_eq!(choose("auto", "linux", "x86_64", None), Ok(Backend::Vulkan));
+        assert_eq!(choose("auto", "macos", "aarch64", None), Ok(Backend::Metal));
+    }
+
+    /// Un Snapdragon sous Windows reçoit le runtime processeur, le seul publié.
+    #[test]
+    fn windows_arm_prend_le_processeur() {
+        assert_eq!(choose("auto", "windows", "aarch64", None), Ok(Backend::Cpu));
+        assert!(choose("vulkan", "windows", "aarch64", None).is_err());
+        let a = assets(TAG, Backend::Cpu, "windows", "aarch64").unwrap();
+        assert_eq!(a, vec!["llama-prism-b10754-2459f68-bin-win-cpu-arm64.zip".to_string()]);
     }
 
     #[test]
     fn un_choix_impossible_est_dit_pas_ignore() {
-        assert!(choose("cuda", "windows", None)
+        assert!(choose("cuda", "windows", "x86_64", None)
             .unwrap_err()
             .contains("nvidia-smi"));
-        assert!(choose("cuda", "windows", Some(535))
+        assert!(choose("cuda", "windows", "x86_64", Some(535))
             .unwrap_err()
             .contains("trop ancien"));
-        assert!(choose("rocm", "linux", None)
+        assert!(choose("rocm", "linux", "x86_64", None)
             .unwrap_err()
             .contains("inconnu"));
     }

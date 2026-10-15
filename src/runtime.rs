@@ -174,9 +174,13 @@ pub fn find_server(dir: &Path) -> Option<PathBuf> {
 }
 
 /// Dossier d'une installation du runtime.
-pub fn install_dir(data: &Path, tag: &str, backend: Backend) -> PathBuf {
+pub fn install_dir(data: &Path, tag: &str, backend: Backend, arch: &str) -> PathBuf {
+    // Le runtime ARM64 a son propre dossier : un runtime x64 posé plus tôt
+    // (lanceur émulé) ne doit pas être repris sur un Snapdragon. Le dossier
+    // x64 garde son nom d'avant, pour ne rien retélécharger.
+    let suffixe = if arch == "aarch64" { "-arm64" } else { "" };
     data.join("runtime")
-        .join(format!("{tag}-{}", backend.name()))
+        .join(format!("{tag}-{}{suffixe}", backend.name()))
 }
 
 /// Le chemin de `llama-server`, installé au besoin.
@@ -187,7 +191,7 @@ pub fn ensure(
     os: &str,
     arch: &str,
 ) -> Result<PathBuf, String> {
-    let dossier = install_dir(data, tag, backend);
+    let dossier = install_dir(data, tag, backend, arch);
     let pret = dossier.join(".ready");
     if pret.exists() {
         if let Some(serveur) = find_server(&dossier) {

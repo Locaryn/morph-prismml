@@ -22,15 +22,15 @@ fn run() -> Result<u8, String> {
     let argv: Vec<String> = std::env::args().skip(1).collect();
     let commande = argv.first().map(String::as_str).unwrap_or("");
     let reglages = settings::Settings::load()?;
-    let (os, arch) = (std::env::consts::OS, std::env::consts::ARCH);
+    let (os, arch) = (std::env::consts::OS, backend::host_arch());
     let pilote = backend::nvidia_driver_major();
-    let choix = backend::choose(&reglages.backend, os, pilote)?;
+    let choix = backend::choose(&reglages.backend, os, arch, pilote)?;
     let data = settings::data_dir();
     let tag = reglages.tag().to_string();
 
     match commande {
         "status" => {
-            let dossier = runtime::install_dir(&data, &tag, choix);
+            let dossier = runtime::install_dir(&data, &tag, choix, arch);
             let serveur =
                 runtime::find_server(&dossier).filter(|_| dossier.join(".ready").exists());
             let etat = serde_json::json!({
