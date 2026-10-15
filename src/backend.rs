@@ -213,8 +213,14 @@ mod tests {
 
     #[test]
     fn nvidia_recent_donne_cuda_sinon_vulkan() {
-        assert_eq!(choose("auto", "windows", "x86_64", Some(616)), Ok(Backend::Cuda));
-        assert_eq!(choose("auto", "windows", "x86_64", Some(535)), Ok(Backend::Vulkan));
+        assert_eq!(
+            choose("auto", "windows", "x86_64", Some(616)),
+            Ok(Backend::Cuda)
+        );
+        assert_eq!(
+            choose("auto", "windows", "x86_64", Some(535)),
+            Ok(Backend::Vulkan)
+        );
         assert_eq!(choose("auto", "linux", "x86_64", None), Ok(Backend::Vulkan));
         assert_eq!(choose("auto", "macos", "aarch64", None), Ok(Backend::Metal));
     }
@@ -225,7 +231,10 @@ mod tests {
         assert_eq!(choose("auto", "windows", "aarch64", None), Ok(Backend::Cpu));
         assert!(choose("vulkan", "windows", "aarch64", None).is_err());
         let a = assets(TAG, Backend::Cpu, "windows", "aarch64").unwrap();
-        assert_eq!(a, vec!["llama-prism-b10754-2459f68-bin-win-cpu-arm64.zip".to_string()]);
+        assert_eq!(
+            a,
+            vec!["llama-prism-b10754-2459f68-bin-win-cpu-arm64.zip".to_string()]
+        );
     }
 
     #[test]
