@@ -183,6 +183,51 @@ pub fn install_dir(data: &Path, tag: &str, backend: Backend, arch: &str) -> Path
         .join(format!("{tag}-{}{suffixe}", backend.name()))
 }
 
+/// Poser à côté de `llama-server` le runtime Visual C++ livré avec le lanceur
+/// (`bin/vcrt/`), quand le système ne l'a pas.
+///
+/// Les runtimes Windows de PrismML dépendent de `VCRUNTIME140.dll` et
+/// `MSVCP140.dll` sans les fournir. Sur un Snapdragon sans le « Visual C++
+/// Redistributable ARM64 » — fréquent —, `llama-server` mourait au démarrage
+/// (DLL introuvable) et le morph attendait un serveur qui ne viendrait jamais.
+/// Microsoft autorise ce dépôt à côté de l'application ; aucune installation
+/// ni droit d'administrateur n'est demandé. Rien ne change si les DLL sont
+/// déjà dans le dossier.
+pub fn poser_runtime_vc(serveur: &Path) {
+    if !cfg!(windows) {
+        return;
+    }
+    let Some(cible) = serveur.parent() else {
+        return;
+    };
+    let Some(source) = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(|d| d.join("vcrt")))
+    else {
+        return;
+    };
+    let Ok(entrees) = std::fs::read_dir(&source) else {
+        return;
+    };
+    for e in entrees.flatten() {
+        let nom = e.file_name();
+        let est_dll = nom.to_string_lossy().to_ascii_lowercase().ends_with(".dll");
+        let dest = cible.join(&nom);
+        if est_dll && !dest.exists() {
+            match std::fs::copy(e.path(), &dest) {
+                Ok(_) => eprintln!(
+                    "[bonsai] runtime Visual C++ posé : {}",
+                    nom.to_string_lossy()
+                ),
+                Err(err) => eprintln!(
+                    "[bonsai] {} non copié à côté du serveur : {err}",
+                    nom.to_string_lossy()
+                ),
+            }
+        }
+    }
+}
+
 /// Le chemin de `llama-server`, installé au besoin.
 pub fn ensure(
     data: &Path,
@@ -195,6 +240,8 @@ pub fn ensure(
     let pret = dossier.join(".ready");
     if pret.exists() {
         if let Some(serveur) = find_server(&dossier) {
+            // Aussi pour une installation d'avant ce correctif.
+            poser_runtime_vc(&serveur);
             return Ok(serveur);
         }
     }
@@ -225,6 +272,7 @@ pub fn ensure(
         }
         let serveur = find_server(&dossier)
             .ok_or_else(|| format!("llama-server absent de {}", dossier.display()))?;
+        poser_runtime_vc(&serveur);
         std::fs::write(&pret, noms.join("\n")).map_err(|e| format!("{}: {e}", pret.display()))?;
         Ok(serveur)
     })();

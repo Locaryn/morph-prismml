@@ -63,6 +63,26 @@ fn valeur<'a>(argv: &'a [String], drapeau: &str) -> Option<&'a str> {
         .map(String::as_str)
 }
 
+/// Ce que veut dire un code de sortie de Windows qui empêche le serveur de
+/// démarrer, dit en clair plutôt qu'un nombre négatif.
+fn cause_windows(code: i32) -> Option<&'static str> {
+    match code as u32 {
+        // STATUS_DLL_NOT_FOUND
+        0xC000_0135 => Some(
+            "llama-server n'a pas pu démarrer : une bibliothèque lui manque (le runtime \
+             Visual C++ le plus souvent). Installez « Microsoft Visual C++ Redistributable » \
+             pour cette machine (ARM64 sur un Snapdragon), puis relancez le modèle.",
+        ),
+        // STATUS_INVALID_IMAGE_FORMAT
+        0xC000_007B => Some(
+            "llama-server n'a pas pu démarrer : une bibliothèque n'est pas de la bonne \
+             architecture (x64 au lieu d'ARM64, ou l'inverse). Réinstallez le morph pour \
+             cette machine.",
+        ),
+        _ => None,
+    }
+}
+
 fn serve(
     argv: &[String],
     reglages: &settings::Settings,
@@ -111,5 +131,8 @@ fn serve(
     let statut = enfant
         .wait()
         .map_err(|e| format!("attente du serveur : {e}"))?;
+    if let Some(explication) = statut.code().and_then(cause_windows) {
+        return Err(explication.to_string());
+    }
     Ok(statut.code().map_or(1, |c| c.clamp(0, 255) as u8))
 }

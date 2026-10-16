@@ -1,0 +1,73 @@
+name: Check-up Windows ARM
+
+# Le morph sur un vrai Windows ARM (runner Snapdragon de GitHub) : le lanceur
+# installe le runtime processeur ARM64 de PrismML, lance Bonsai-8B, et une
+# question doit recevoir une réponse. Lancé à la main, et à chaque tag.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  checkup:
+    name: Bonsai-8B sur Windows ARM64
+    runs-on: windows-11-arm
+    timeout-minutes: 60
+    env:
+      LOCARYN_EXTENSION_DATA_DIR: ${{ github.workspace }}\donnees
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.88
+      - name: Compiler le lanceur
+        run: cargo build --release --locked --bin locaryn-bonsai-launch
+      - name: Runtime Visual C++ à côté du lanceur, comme dans le paquet
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $crt = Get-ChildItem "$vs\VC\Redist\MSVC" -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { Get-ChildItem (Join-Path $_.FullName 'arm64') -Directory -Filter 'Microsoft.VC14*.CRT' -ErrorAction SilentlyContinue } |
+            Select-Object -First 1
+          New-Item -ItemType Directory -Force target/release/vcrt | Out-Null
+          Copy-Item "$($crt.FullName)\*.dll" target/release/vcrt/
+          Get-ChildItem target/release/vcrt | Format-Table Name, Length
+      - name: Installer le runtime PrismML ARM64
+        shell: pwsh
+        run: |
+          ./target/release/locaryn-bonsai-launch.exe install
+          ./target/release/locaryn-bonsai-launch.exe status
+          Get-ChildItem -Recurse "$env:LOCARYN_EXTENSION_DATA_DIR\runtime" -Filter *.dll | Where-Object Name -like '*140*' | Format-Table Name, DirectoryName
+      - name: Télécharger Bonsai-8B (1,1 Go)
+        shell: pwsh
+        run: curl.exe -sSL -o "$env:RUNNER_TEMP\Bonsai-8B-Q1_0.gguf" "https://huggingface.co/prism-ml/Bonsai-8B-gguf/resolve/main/Bonsai-8B-Q1_0.gguf"
+      - name: Lancer et interroger
+        shell: pwsh
+        run: |
+          $modele = "$env:RUNNER_TEMP\Bonsai-8B-Q1_0.gguf"
+          $p = Start-Process -FilePath ./target/release/locaryn-bonsai-launch.exe `
+            -ArgumentList 'serve', '--port', '8189', '--model', $modele `
+            -RedirectStandardError serveur-err.log -RedirectStandardOutput serveur-out.log -PassThru -NoNewWindow
+          $pret = $false
+          for ($i = 0; $i -lt 300; $i++) {
+            if ($p.HasExited) { break }
+            try {
+              $h = Invoke-RestMethod -Uri http://127.0.0.1:8189/health -TimeoutSec 2
+              if ($h.status -eq 'ok') { $pret = $true; break }
+            } catch {}
+            Start-Sleep -Seconds 2
+          }
+          if (-not $pret) {
+            Write-Host "--- le serveur n'est pas prêt (sortie : $($p.ExitCode))"
+            Get-Content serveur-err.log -Tail 60
+            exit 1
+          }
+          $corps = @{
+            messages = @(@{ role = 'user'; content = 'Réponds en une phrase : quelle est la capitale de la France ?' })
+            max_tokens = 96
+          } | ConvertTo-Json -Depth 5
+          $r = Invoke-RestMethod -Uri http://127.0.0.1:8189/v1/chat/completions -Method Post -ContentType 'application/json' -Body $corps -TimeoutSec 600
+          Write-Host "--- réponse : $($r.choices[0].message.content)"
+          Write-Host ("--- génération {0:N1} jetons/s, lecture du prompt {1:N1} jetons/s" -f $r.timings.predicted_per_second, $r.timings.prompt_per_second)
+          Get-Content serveur-err.log -Tail 25
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          if (-not $r.choices[0].message.content) { exit 1 }

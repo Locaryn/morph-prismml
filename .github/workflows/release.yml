@@ -83,6 +83,25 @@ jobs:
           cp "target/${{ matrix.target }}/release/${{ matrix.binary }}" bundle/bin/
           test -f bundle/bin/${{ matrix.binary }}
           test -f bundle/morph.json
+      # Le runtime Visual C++ de l'architecture, à côté du lanceur : les
+      # runtimes Windows de PrismML en dépendent sans le fournir, et un
+      # Snapdragon ne l'a souvent pas. Le lanceur le pose à côté de
+      # llama-server (dépôt local autorisé par Microsoft).
+      - name: Joindre le runtime Visual C++ (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $arch = if ('${{ matrix.target }}' -like 'aarch64*') { 'arm64' } else { 'x64' }
+          $crt = Get-ChildItem "$vs\VC\Redist\MSVC" -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { Get-ChildItem (Join-Path $_.FullName $arch) -Directory -Filter 'Microsoft.VC14*.CRT' -ErrorAction SilentlyContinue } |
+            Select-Object -First 1
+          if (-not $crt) { throw "runtime Visual C++ $arch introuvable dans $vs" }
+          New-Item -ItemType Directory -Force bundle/bin/vcrt | Out-Null
+          Copy-Item "$($crt.FullName)\*.dll" bundle/bin/vcrt/
+          if (-not (Test-Path bundle/bin/vcrt/vcruntime140.dll) -or -not (Test-Path bundle/bin/vcrt/msvcp140.dll)) { throw "vcruntime140.dll ou msvcp140.dll manquant" }
+          Get-ChildItem bundle/bin/vcrt | Format-Table Name, Length
       - uses: actions/upload-artifact@v7
         with:
           name: bundle-${{ matrix.label }}
@@ -120,6 +139,9 @@ jobs:
             unzip -l "$archive" | grep -q "morph.json"
             unzip -l "$archive" | grep -q "dist/marketplace.json"
             unzip -l "$archive" | grep -q "bin/locaryn-bonsai-launch"
+            case "$archive" in
+              *windows*) unzip -l "$archive" | grep -qi "bin/vcrt/msvcp140.dll" ;;
+            esac
           done
       - name: Empreintes SHA-256
         run: |
